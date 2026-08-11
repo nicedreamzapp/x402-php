@@ -17,18 +17,34 @@ final class Facilitator
 
     private string $url;
     private int $timeout;
-    /** @var array<string, string> */
-    private array $headers;
+    /** @var array<string, string>|callable(string, string): array<string, string> */
+    private $headers;
 
-    /** @param array<string, string> $headers extra auth headers, if your facilitator needs them */
+    /**
+     * @param array<string, string>|callable(string, string): array<string, string> $headers
+     *        Static auth headers, or a factory called with (method, path) for
+     *        facilitators that want a freshly signed token per request.
+     */
     public function __construct(
         string $url = self::DEFAULT_URL,
         int $timeout = 30,
-        array $headers = []
+        $headers = []
     ) {
+        if (!is_array($headers) && !is_callable($headers)) {
+            throw new X402Exception('Facilitator headers must be an array or a callable factory.');
+        }
+
         $this->url = rtrim($url, '/');
         $this->timeout = $timeout;
         $this->headers = $headers;
+    }
+
+    /** Coinbase's hosted facilitator, which settles on Base mainnet. */
+    public static function coinbase(string $keyFilePath, int $timeout = 30): self
+    {
+        $auth = Auth\CdpAuth::fromKeyFile($keyFilePath);
+
+        return new self(Auth\CdpAuth::facilitatorUrl(), $timeout, $auth->headerFactory());
     }
 
     /**
@@ -98,7 +114,12 @@ final class Facilitator
         }
 
         $headers = ['Accept: application/json'];
-        foreach ($this->headers as $name => $value) {
+
+        $auth = is_callable($this->headers)
+            ? ($this->headers)($method, parse_url($this->url . $path, PHP_URL_PATH) ?: $path)
+            : $this->headers;
+
+        foreach ($auth as $name => $value) {
             $headers[] = "{$name}: {$value}";
         }
 
@@ -116,7 +137,6 @@ final class Facilitator
         $raw = curl_exec($ch);
         $status = (int) curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
         $curlError = curl_error($ch);
-        curl_close($ch);
 
         if ($raw === false) {
             throw new X402Exception("Facilitator unreachable: {$curlError}");
