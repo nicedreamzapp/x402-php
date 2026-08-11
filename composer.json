@@ -1,0 +1,24 @@
+{
+  "name": "divinetribe/x402-php",
+  "description": "x402 payment protocol for PHP — let AI agents pay your site in stablecoins. Zero dependencies.",
+  "type": "library",
+  "license": "Apache-2.0",
+  "keywords": ["x402", "payments", "ai-agents", "usdc", "http-402", "wordpress", "woocommerce"],
+  "require": {
+    "php": ">=8.0",
+    "ext-json": "*",
+    "ext-curl": "*"
+  },
+  "autoload": {
+    "psr-4": {
+      "X402\\": "src/"
+    }
+  },
+  "authors": [
+    {
+      "name": "Matt Macosko",
+      "email": "matt@ineedhemp.com",
+      "homepage": "https://ineedhemp.com"
+    }
+  ]
+}
