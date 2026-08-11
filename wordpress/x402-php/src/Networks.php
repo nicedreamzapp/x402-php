@@ -22,12 +22,19 @@ final class Networks
         'sepolia'      => self::BASE_SEPOLIA,
     ];
 
-    /** USDC contract, decimals, and EIP-712 domain per network. */
+    /**
+     * USDC contract, decimals, and EIP-712 domain per network.
+     *
+     * The domain name is the token contract's own name and differs by network —
+     * mainnet USDC signs as "USD Coin" while the Sepolia deployment signs as
+     * "USDC". Get it wrong and every signature verifies against the wrong
+     * domain, which the facilitator reports only as "invalid_payload".
+     */
     private const ASSETS = [
         self::BASE => [
             'address'  => '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913',
             'decimals' => 6,
-            'extra'    => ['name' => 'USDC', 'version' => '2'],
+            'extra'    => ['name' => 'USD Coin', 'version' => '2'],
         ],
         self::BASE_SEPOLIA => [
             'address'  => '0x036CbD53842c5426634e7929541eC2318f3dCF7e',
