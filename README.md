@@ -23,7 +23,11 @@ echo $article;          // deliver first
 $booth->settle($result); // then take the money
 ```
 
-## What I built
+<picture><source media="(max-width: 610px), (min-width: 768px) and (max-width: 895px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s01-banner-m.svg"><source media="(max-width: 1149px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s01-banner-mid.svg"><img src="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s01-banner.svg" width="100%" alt="01. What it is. Let AI agents pay your site"></picture>
+<picture><source media="(max-width: 610px), (min-width: 768px) and (max-width: 895px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s01-r1-m.svg"><source media="(max-width: 1149px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s01-r1-mid.svg"><img src="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s01-r1.svg" width="100%" alt="17 17. offline checks, all passing. 0 Zero. dependencies."></picture>
+
+**PHP 8.0+** · json and curl
+
 
 All code in this repo is by Matt Macosko (listed as author in `composer.json` and both plugin headers). Upstream: the x402 protocol, the x402.org and Coinbase facilitators, and USDC.
 
@@ -37,11 +41,14 @@ All code in this repo is by Matt Macosko (listed as author in `composer.json` an
 - **WordPress agent commerce**: [`wordpress/divine-tribe-agent-commerce.php`](wordpress/divine-tribe-agent-commerce.php) exposes a WooCommerce catalog at `/wp-json/agent/v1/catalog` and an x402-paid `/order` endpoint with a 21+ age attestation. Starts in `catalog` mode.
 - **Tests and example**: [`tests/run.php`](tests/run.php), [`examples/toll_server.php`](examples/toll_server.php).
 
-## Why this exists
+### Why this exists
 
 The official x402 SDKs are TypeScript, Python, and Go. PHP runs roughly 40% of the web and every WordPress and WooCommerce site on it — the largest population of site owners on the internet had no first-class way to speak the protocol. This fills that gap.
 
-## How it works
+<img src="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s01-rule.svg" width="100%" alt="">
+
+<picture><source media="(max-width: 610px), (min-width: 768px) and (max-width: 895px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s02-banner-m.svg"><source media="(max-width: 1149px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s02-banner-mid.svg"><img src="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s02-banner.svg" width="100%" alt="02. How it works. 402, signature, verify, serve, settle"></picture>
+<picture><source media="(max-width: 610px), (min-width: 768px) and (max-width: 895px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s02-r1-m.svg"><source media="(max-width: 1149px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s02-r1-mid.svg"><img src="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s02-r1.svg" width="100%" alt="402 Payment Required. You answer an agent with your price, asset, network and wallet. Agent signs and retries. The signature goes in a PAYMENT-SIGNATURE header. Verify, serve, settle. A facilitator checks it, then money moves wallet to wallet."></picture>
 
 1. An AI agent requests a page. No payment attached, so you answer **402 Payment Required** with your terms: price, asset, network, and the wallet to pay.
 2. The agent signs an authorization for that exact amount and retries with it in a `PAYMENT-SIGNATURE` header (the v1 `X-PAYMENT` header is also read).
@@ -49,7 +56,34 @@ The official x402 SDKs are TypeScript, Python, and Go. PHP runs roughly 40% of t
 
 Your private key is never involved — this library only ever handles signatures the agent produced. A facilitator never custodies your funds either; settlement moves money directly from the payer's wallet to `payTo`.
 
-## Install
+### What is verified
+
+An agent echoes back the terms it is paying. Trusting that echo is how you let a client set its own price, so `collect()` checks the echo against the terms you actually offered — scheme, network, asset, destination wallet, and amount — before the facilitator is ever called. Overpayment is accepted; underpayment, a swapped asset, a different chain, or a redirected `payTo` are all rejected.
+
+### Prices are strings, deliberately
+
+`'$0.001'` is parsed as a decimal string and converted to atomic units with integer math. Floats are never involved, because `0.1 + 0.2` is not `0.3` and money that is off by a rounding error is money that is off.
+
+A price finer than the asset's precision throws rather than silently rounding to zero:
+
+```php
+Price::toAtomic('$0.001', 6);      // "1000"
+Price::toAtomic('$0.0000001', 6);  // X402Exception — would have rounded away
+```
+
+### Networks
+
+| Network | CAIP-2 | Default asset |
+|---|---|---|
+| Base | `eip155:8453` | USDC |
+| Base Sepolia (testnet) | `eip155:84532` | USDC |
+
+Any other chain works by passing `asset` and `decimals` to `PaymentOption` explicitly.
+
+<img src="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s02-rule.svg" width="100%" alt="">
+
+<picture><source media="(max-width: 610px), (min-width: 768px) and (max-width: 895px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s03-banner-m.svg"><source media="(max-width: 1149px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s03-banner-mid.svg"><img src="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s03-banner.svg" width="100%" alt="03. Install and use. Composer optional"></picture>
+<picture><source media="(max-width: 610px), (min-width: 768px) and (max-width: 895px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s03-r1-m.svg"><source media="(max-width: 1149px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s03-r1-mid.svg"><img src="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s03-r1.svg" width="100%" alt="composer require. divinetribe/x402-php, or drop in the folder. Base and Base Sepolia. USDC by default. Runnable example. examples/toll_server.php, hit it with curl."></picture>
 
 ```bash
 composer require divinetribe/x402-php
@@ -59,7 +93,7 @@ Or drop the folder in and `require_once 'x402-php/autoload.php';` — the bundle
 
 Requires PHP 8.0+ with `json` and `curl`. Settling through Coinbase also needs the `sodium` extension.
 
-## Charging for something
+### Charging for something
 
 ```php
 use X402\{TollBooth, Facilitator, PaymentOption, Networks};
@@ -114,31 +148,7 @@ new Facilitator('https://facilitator.example.com', 30, ['Authorization' => 'Bear
 
 Headers can also be a callable `(method, path) => [...]` for per-request tokens. Nothing in this library assumes a particular provider.
 
-## Prices are strings, deliberately
-
-`'$0.001'` is parsed as a decimal string and converted to atomic units with integer math. Floats are never involved, because `0.1 + 0.2` is not `0.3` and money that is off by a rounding error is money that is off.
-
-A price finer than the asset's precision throws rather than silently rounding to zero:
-
-```php
-Price::toAtomic('$0.001', 6);      // "1000"
-Price::toAtomic('$0.0000001', 6);  // X402Exception — would have rounded away
-```
-
-## What is verified
-
-An agent echoes back the terms it is paying. Trusting that echo is how you let a client set its own price, so `collect()` checks the echo against the terms you actually offered — scheme, network, asset, destination wallet, and amount — before the facilitator is ever called. Overpayment is accepted; underpayment, a swapped asset, a different chain, or a redirected `payTo` are all rejected.
-
-## Networks
-
-| Network | CAIP-2 | Default asset |
-|---|---|---|
-| Base | `eip155:8453` | USDC |
-| Base Sepolia (testnet) | `eip155:84532` | USDC |
-
-Any other chain works by passing `asset` and `decimals` to `PaymentOption` explicitly.
-
-## Try it
+### Try it
 
 ```bash
 php -S 127.0.0.1:4022 examples/toll_server.php
@@ -149,7 +159,7 @@ Only `/blog` is paid; every other path is free. Set `X402_WALLET` to your own ad
 
 Point any x402 client at it. Verified end-to-end against the official Python client and the live `x402.org` facilitator on Base Sepolia: the PHP booth's terms are byte-identical to the reference implementation's, and a real signed payment round-trips through verification.
 
-## Tests
+### Tests
 
 ```bash
 php tests/run.php
@@ -157,7 +167,10 @@ php tests/run.php
 
 No test framework required. The tests run offline and do not call a facilitator.
 
-## Known limits
+<img src="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s03-rule.svg" width="100%" alt="">
+
+<picture><source media="(max-width: 610px), (min-width: 768px) and (max-width: 895px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s04-banner-m.svg"><source media="(max-width: 1149px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s04-banner-mid.svg"><img src="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s04-banner.svg" width="100%" alt="04. Limits and license. Know before you ship"></picture>
+<picture><source media="(max-width: 610px), (min-width: 768px) and (max-width: 895px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s04-r1-m.svg"><source media="(max-width: 1149px)" srcset="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s04-r1-mid.svg"><img src="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s04-r1.svg" width="100%" alt="Apache-2.0. Matching the x402 protocol itself. Exact scheme only. Default assets for Base and Base Sepolia."></picture>
 
 - Only the `exact` scheme with default assets for Base and Base Sepolia. Other EVM chains need `asset` and `decimals` passed by hand; non-EVM chains are untested.
 - The live end-to-end run described under "Try it" is not scripted in this repo. `tests/run.php` covers only the offline logic.
@@ -165,10 +178,12 @@ No test framework required. The tests run offline and do not call a facilitator.
 - The WordPress plugins expect the library copied to `wordpress/x402-php/` next to them. That copy is checked in and must be kept in sync with `src/` by hand.
 - Settlement runs after delivery, so a failed settle means one page served unpaid. That is by design, see above.
 
-## License
+### License
 
 Apache-2.0, matching the x402 protocol itself.
 
 ---
 
 Built by [Matt Macosko](https://ineedhemp.com) — running in production on ineedhemp.com, an independent e-commerce store charging AI agents since 2026.
+
+<img src="https://raw.githubusercontent.com/nicedreamzapp/x402-php/main/assets/readme/s04-rule.svg" width="100%" alt="">
